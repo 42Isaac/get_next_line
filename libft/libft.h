@@ -85,7 +85,7 @@ typedef struct		s_list
 
 void				ft_lstadd(t_list **alst, t_list *new);
 void				ft_lstdel(t_list **alst);
-static t_list		*ft_lstnew(int fd);
+t_list				*ft_lstnew(int fd);
 
 /*
 ** Extra functions

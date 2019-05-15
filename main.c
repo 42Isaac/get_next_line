@@ -1,26 +1,32 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_lstnew.c                                        :+:      :+:    :+:   */
+/*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: iperez <marvin@42.fr>                      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/03/06 15:27:22 by iperez            #+#    #+#             */
-/*   Updated: 2019/03/06 15:27:24 by iperez           ###   ########.fr       */
+/*   Created: 2019/05/15 14:23:05 by iperez            #+#    #+#             */
+/*   Updated: 2019/05/15 14:23:14 by iperez           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../libft.h"
+#include <fcntl.h>
 
-t_list		*ft_lstnew(int fd)
+int			main(void)
 {
-	t_list		*list;
+	char	*line;
+	int		i;
+	int		fd;
 
-	if (!(list = (t_list *)malloc(sizeof(*list))))
-		return (NULL);
-	list->fd = fd;
-	if (!(list->buffer = ft_strnew(0)))
-		list->buffer = NULL;
-	list->next = NULL;
-	return (list);
+	i = 1;
+	fd = open("txt.txt", O_RDONLY | O_EXCL);
+	while (i)
+	{
+		i = get_next_line(fd, &line);
+		ft_putstr(line);
+		ft_putstr("\n");
+		free(line);
+	}
+	ft_putstr("\n~-~ EOF HAS BEEN REACHED ~-~\n");
+	return (0);
 }

@@ -12,67 +12,108 @@
 
 #include "get_next_line.h"
 
-int		checknewline(const char *buf, int br)
+/*
+** Returns the list for the current fd.
+** If none exists, make a new list and add to the linked list.
+*/
+
+static t_list	*correct_fd(t_list **fdl, int fd)
 {
-	int			i;
+	t_list			*curfd;
 
-	i = 0;
-	while (buf[i] && buf[i] != '\n')
-		i++;
-	if (buf[i] != '\n')
-		return (-1);
-	i = br - i;
-	return (i);
-}
-
-static t_list	*correct_fd(t_list **fdlist, int fd)
-{
-	t_list			*currfd;
-
-	currfd = *fdlist;
-	while (currfd)
+	curfd = *fdl;
+	while (curfd)
 	{
-		if (currfd->fd = fd)
-			return (currfd);
-		currfd = currfd->next;
+		if (curfd->fd == fd)
+			return (curfd->buffer == NULL ? NULL : curfd);
+		curfd = curfd->next;
 	}
-	if (!(currfd = ft_lstnew(fd)))
+	if (!(curfd = ft_lstnew(fd)))
 	{
-		fd_lstdel(&fdlist);
+		ft_lstdel(fdl);
 		return (NULL);
 	}
-	ft_lstadd(fdlist, currfd);
-	return (fdlist);
+	ft_lstadd(fdl, curfd);
+	return (*fdl);
 }
 
-void		copytillnewline(char **hold, char **line, int linelen)
-{
-	int i;
-	char *temp;
+/*
+** Removes line from sbuf.
+** Returns 0 on success, -1 on failure.
+*/
 
-	i = -1;
-	*line = ft_strnew(linelen);
-	while (++i <= linelen)
-		*line[i] = *hold[i];
-	while (hold[i])
+static int		clean_sbuf(char **sbuf, char **line)
+{
+	int		sbuflen;
+	int		newbuflen;
+	int		nblcopy;
+	char	*buf;
+
+	sbuflen = ft_strlen(*sbuf);
+	newbuflen = sbuflen - ft_strlen(*line);
+	nblcopy = newbuflen;
+	MALLCHECK(buf = ft_strnew(newbuflen));
+	while (newbuflen > 0)
+		buf[newbuflen--] = (*sbuf)[sbuflen--];
+	free(*sbuf);
+	MALLCHECK(*sbuf = ft_strnew(nblcopy));
+	while (nblcopy > 0)
+	{
+		(*sbuf)[nblcopy] = buf[nblcopy];
+		nblcopy--;
+	}
+	free(buf);
+	return (0);
+}
+
+/*
+** Copy sbuf to line up to newline or EOF.
+** Returns 1 on success, 0 on EOF, and -1 on error.
+*/
+
+static int		copy_till_eol(char *sbuf, char **line)
+{
+	int		i;
+	int		returnvalue;
+
+	i =	0;
+	while (sbuf[i] && sbuf[i] != '\n')
 		i++;
-	i -= linelen;
-	temp = ft_strnew(i);
-	i = linelen - 1;
-	while (hold[++i])
-		temp[i] = *hold[i];
-	free(*hold);
-	hold = &temp;
+	if (!sbuf[i])
+		returnvalue = 0;
+	MALLCHECK(*line = ft_strnew(i))
+	while (i-- > 0)
+		(*line)[i] = sbuf[i];
+	if (clean_sbuf(&sbuf, line))
+		return (-1);
+	return (returnvalue);
 }
 
 int				get_next_line(const int fd, char **line)
 {
-	static t_list	*fdlist;
-	char			*buf[BUFF_SIZE + 1];
-	t_list			*currfd;
+	char			buf[BUFF_SIZE + 1];
+	static t_list	*fdl;
+	int				b_read;
+	t_list			*curfd;
 
-	if (fd < 0 || !line || read(fd, buf, 0) < 0 ||
-		!(currfd = correct_fd(&fdlist, fd)))
+	if (fd < 0 || !line || read(fd, buf, 0) < 0 || !(curfd = c_fd(&fdl, fd)))
 		return (-1);
-	
+	if (ft_strchr(curfd->buffer, '\n'))
+	{
+		b_read = copy_till_eol(curfd->buffer, line);
+		return (b_read == -1 ? -1 : 1);
+	}
+	while ((b_read = read(fd, buf, BUFF_SIZE)))
+	{
+		buf[b_read] = '\0';
+		MALLCHECK(curfd->buffer = ft_strjoin(curfd->buffer, buf))
+		if (ft_strchr(buf, '\n')) break;
+	}
+	b_read = copy_till_eol(curfd->buffer, line);
+	if (b_read == 0 || b_read == -1)
+	{
+		ft_lstdel(&fdl);
+		return (b_read);
+	}
+	return (1);
 }

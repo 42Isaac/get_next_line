@@ -15,8 +15,8 @@
 void		ft_lstdel(t_list **alst)
 {
 	if ((*alst)->next)
-		ft_lstdel(&(*alst)->hold);
-	free((*alst)->hold);
+		ft_lstdel(&(*alst)->next);
+	free((*alst)->buffer);
 	free(*alst);
 	*alst = NULL;
 }
