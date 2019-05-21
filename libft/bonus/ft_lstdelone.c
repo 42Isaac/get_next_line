@@ -22,7 +22,7 @@ void	ft_lstdelone(t_list **alst, const int fd)
 	t_list	*curlst;
 
 	curlst = *alst;
-	temp = ((*alst)->fd == fd ? *alst : NULL);ß
+	temp = ((*alst)->fd == fd ? *alst : NULL);
 	while (!temp)
 	{
 		if (curlst->next->fd == fd)
