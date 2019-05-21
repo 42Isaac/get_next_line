@@ -12,9 +12,30 @@
 
 #include "../libft.h"
 
-void	ft_lstdelone(t_list **alst)
+/*
+**	Safely removes the list containing fd from the linked list.
+*/
+
+void	ft_lstdelone(t_list **alst, const int fd)
 {
-	del((*alst)->next->content, (*alst)->content_size);
-	free(*alst);
-	*alst = NULL;
+	t_list	*temp;
+	t_list	*curlst;
+
+	curlst = *alst;
+	temp = NULL;
+	if ((*alst)->fd == fd)
+		temp = *alst;
+	while (!temp)
+	{
+		if (curlst->next->fd == fd)
+			temp = curlst->next;
+		else
+			curlst = curlst->next;
+	}
+	if ((*alst)->fd == fd)
+		*alst = (*alst)->next;
+	else
+		curlst->next = curlst->next->next;
+	free(temp->buffer);
+	free(temp);
 }

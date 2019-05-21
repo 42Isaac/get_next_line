@@ -10,6 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "libft/libft.h"
+#include "get_next_line.h"
 #include <fcntl.h>
 
 int			main(void)
@@ -19,7 +21,7 @@ int			main(void)
 	int		fd;
 
 	i = 1;
-	fd = open("txt.txt", O_RDONLY | O_EXCL);
+	fd = open("get_next_line.c", O_RDONLY | O_EXCL);
 	while (i)
 	{
 		i = get_next_line(fd, &line);

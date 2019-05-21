@@ -84,6 +84,7 @@ typedef struct		s_list
 }					t_list;
 
 void				ft_lstadd(t_list **alst, t_list *new);
+void				ft_lstdelone(t_list **alst, const int fd);
 void				ft_lstdel(t_list **alst);
 t_list				*ft_lstnew(int fd);
 

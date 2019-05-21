@@ -17,7 +17,7 @@
 ** If none exists, make a new list and add to the linked list.
 */
 
-static t_list	*correct_fd(t_list **fdl, int fd)
+static t_list	*c_fd(t_list **fdl, int fd)
 {
 	t_list			*curfd;
 
@@ -28,9 +28,9 @@ static t_list	*correct_fd(t_list **fdl, int fd)
 			return (curfd->buffer == NULL ? NULL : curfd);
 		curfd = curfd->next;
 	}
-	if (!(curfd = ft_lstnew(fd)))
+	if (!(curfd = ft_lstnew(fd)) || curfd->buffer == NULL)
 	{
-		ft_lstdel(fdl);
+		ft_lstdelone(&curfd, fd);
 		return (NULL);
 	}
 	ft_lstadd(fdl, curfd);
@@ -42,15 +42,13 @@ static t_list	*correct_fd(t_list **fdl, int fd)
 ** Returns 0 on success, -1 on failure.
 */
 
-static int		clean_sbuf(char **sbuf, char **line)
+static int		clean_sbuf(char **sbuf, int newbuflen)
 {
 	int		sbuflen;
-	int		newbuflen;
 	int		nblcopy;
 	char	*buf;
 
 	sbuflen = ft_strlen(*sbuf);
-	newbuflen = sbuflen - ft_strlen(*line);
 	nblcopy = newbuflen;
 	MALLCHECK(buf = ft_strnew(newbuflen));
 	while (newbuflen > 0)
@@ -74,17 +72,19 @@ static int		clean_sbuf(char **sbuf, char **line)
 static int		copy_till_eol(char *sbuf, char **line)
 {
 	int		i;
+	int		icpy;
 	int		returnvalue;
 
 	i =	0;
 	while (sbuf[i] && sbuf[i] != '\n')
 		i++;
-	if (!sbuf[i])
+	icpy = i;
+	if (!sbuf[icpy])
 		returnvalue = 0;
 	MALLCHECK(*line = ft_strnew(i))
-	while (i-- > 0)
-		(*line)[i] = sbuf[i];
-	if (clean_sbuf(&sbuf, line))
+	while (icpy-- > 0)
+		(*line)[icpy] = sbuf[icpy];
+	if (clean_sbuf(&sbuf, i))
 		return (-1);
 	return (returnvalue);
 }
@@ -112,7 +112,7 @@ int				get_next_line(const int fd, char **line)
 	b_read = copy_till_eol(curfd->buffer, line);
 	if (b_read == 0 || b_read == -1)
 	{
-		ft_lstdel(&fdl);
+		ft_lstdelone(&fdl, fd);
 		return (b_read);
 	}
 	return (1);
