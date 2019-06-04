@@ -81,7 +81,7 @@ static int		copy_till_eol(char *sbuf, char **line)
 	icpy = i;
 	if (!sbuf[icpy])
 		returnvalue = 0;
-	MALLCHECK(*line = ft_strnew(i))
+	MALLCHECK(*line = ft_strnew(icpy))
 	while (icpy-- > 0)
 		(*line)[icpy] = sbuf[icpy];
 	if (clean_sbuf(&sbuf, i))
@@ -95,6 +95,7 @@ int				get_next_line(const int fd, char **line)
 	static t_list	*fdl;
 	int				b_read;
 	t_list			*curfd;
+	char			*tempbuf;
 
 	if (fd < 0 || !line || read(fd, buf, 0) < 0 || !(curfd = c_fd(&fdl, fd)))
 		return (-1);
@@ -106,7 +107,10 @@ int				get_next_line(const int fd, char **line)
 	while ((b_read = read(fd, buf, BUFF_SIZE)))
 	{
 		buf[b_read] = '\0';
-		MALLCHECK(curfd->buffer = ft_strjoin(curfd->buffer, buf))
+	//	ft_putstr(buf);
+		MALLCHECK(tempbuf = ft_strjoin(curfd->buffer, buf))
+		free(curfd->buffer);
+		curfd->buffer = tempbuf;
 		if (ft_strchr(buf, '\n')) break;
 	}
 	b_read = copy_till_eol(curfd->buffer, line);
