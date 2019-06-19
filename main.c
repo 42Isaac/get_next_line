@@ -14,20 +14,54 @@
 #include "get_next_line.h"
 #include <fcntl.h>
 
-int			main(void)
+int			main(int ac, char **av)
 {
 	char	*line;
-	int		i;
-	int		fd;
+	int		i1;
+	int		i2;
+	int		fd1;
+	int		fd2;
 
-	i = 1;
-	fd = open("get_next_line.c", O_RDONLY | O_EXCL);
-	while (i)
+	if (ac != 2 && ac != 3)
 	{
-		i = get_next_line(fd, &line);
-		ft_putstr(line);
-		ft_putstr("\n");
-		free(line);
+		ft_putstr("Enter 1 or 2 filenames as parameters.\n1 file prints using GNL.\n2 files prints lines back and forth between the 2 files, till both are finished.\n");
+		return (0);
+	}
+	if (ac == 3)
+	{
+		i1 = 1;
+		i2 = 1;
+		fd1 = open(av[1], O_RDONLY | O_EXCL);
+		fd2 = open(av[2], O_RDONLY | O_EXCL);
+		while (i1 || i2)
+		{
+			if (i1)
+			{
+				i1 = get_next_line(fd1, &line);
+				ft_putstr(line);
+				ft_putstr("\n");
+				free(line);
+			}
+			if (i2)
+			{
+				i2 = get_next_line(fd2, &line);
+				ft_putstr(line);
+				ft_putstr("\n");
+				free(line);
+			}
+		}
+	}
+	if (ac == 2)
+	{
+		i1 = 1;
+		fd1 = open(av[1], O_RDONLY | O_EXCL);
+		while (i1)
+		{
+			i1 = get_next_line(fd1, &line);
+			ft_putstr(line);
+			ft_putstr("\n");
+			free(line);
+		}
 	}
 	ft_putstr("\n~-~ EOF HAS BEEN REACHED ~-~\n");
 	return (0);

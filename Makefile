@@ -5,31 +5,31 @@
 #                                                     +:+ +:+         +:+      #
 #    By: iperez <marvin@42.fr>                      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2019/01/29 13:02:20 by iperez            #+#    #+#              #
-#    Updated: 2019/02/04 13:33:59 by iperez           ###   ########.fr        #
+#    Created: 2019/06/19 06:24:02 by iperez            #+#    #+#              #
+#    Updated: 2019/06/19 06:24:04 by iperez           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME		= libft.a
+NAME		= gnl
 CFLAGS		= -Wall -Werror -Wextra
 
-OBJ			= $(patsubst %.c,%.o,$(wildcard \
-				libc/*.c additional/*.c bonus/*.c personal/*.c))
+INCLUDES	= $(wildcard *.c)
 
 .PHONY: silent show all clean fclean re
 
 silent:
 	@make all -s
 
-all: $(NAME)
+debug:
+	make all CFLAGS='$(CFLAGS) -g'
 
-$(NAME): $(OBJ)
-	ar -rcs $(NAME) $(OBJ)
+all:
+	$(MAKE) all -C libft
+	gcc $(CFLAGS) $(INCLUDES) libft/libft.a -o $(NAME)
 
 clean:
-	rm -f $(OBJ)
-
-fclean: clean
+	$(MAKE) clean -C libft
 	rm -f $(NAME)
+	rm -r $(NAME).dSYM
 
 re: fclean all

@@ -42,20 +42,22 @@ static t_list	*c_fd(t_list **fdl, int fd)
 ** Returns 0 on success, -1 on failure.
 */
 
-static int		clean_sbuf(char **sbuf, int newbuflen)
+static int		clean_sbuf(char **sbuf, int linelen)
 {
 	int		sbuflen;
+	int		newbuflen;
 	int		nblcopy;
 	char	*buf;
 
 	sbuflen = ft_strlen(*sbuf);
+	newbuflen = sbuflen - linelen - 1;
 	nblcopy = newbuflen;
 	MALLCHECK(buf = ft_strnew(newbuflen));
-	while (newbuflen > 0)
+	while (newbuflen >= 0)
 		buf[newbuflen--] = (*sbuf)[sbuflen--];
 	free(*sbuf);
 	MALLCHECK(*sbuf = ft_strnew(nblcopy));
-	while (nblcopy > 0)
+	while (nblcopy >= 0)
 	{
 		(*sbuf)[nblcopy] = buf[nblcopy];
 		nblcopy--;
@@ -69,22 +71,24 @@ static int		clean_sbuf(char **sbuf, int newbuflen)
 ** Returns 1 on success, 0 on EOF, and -1 on error.
 */
 
-static int		copy_till_eol(char *sbuf, char **line)
+static int		copy_till_eol(char **sbuf, char **line)
 {
 	int		i;
 	int		icpy;
 	int		returnvalue;
 
 	i =	0;
-	while (sbuf[i] && sbuf[i] != '\n')
+	while ((*sbuf)[i] && (*sbuf)[i] != '\n')
 		i++;
 	icpy = i;
-	if (!sbuf[icpy])
+	if (!(*sbuf)[icpy])
 		returnvalue = 0;
-	MALLCHECK(*line = ft_strnew(icpy))
+	MALLCHECK(*line = ft_strnew(i))
 	while (icpy-- > 0)
-		(*line)[icpy] = sbuf[icpy];
-	if (clean_sbuf(&sbuf, i))
+	{
+		(*line)[icpy] = (*sbuf)[icpy];
+	}
+	if (clean_sbuf(sbuf, i))
 		return (-1);
 	return (returnvalue);
 }
@@ -95,25 +99,21 @@ int				get_next_line(const int fd, char **line)
 	static t_list	*fdl;
 	int				b_read;
 	t_list			*curfd;
-	char			*tempbuf;
 
 	if (fd < 0 || !line || read(fd, buf, 0) < 0 || !(curfd = c_fd(&fdl, fd)))
 		return (-1);
 	if (ft_strchr(curfd->buffer, '\n'))
 	{
-		b_read = copy_till_eol(curfd->buffer, line);
+		b_read = copy_till_eol(&curfd->buffer, line);
 		return (b_read == -1 ? -1 : 1);
 	}
 	while ((b_read = read(fd, buf, BUFF_SIZE)))
 	{
 		buf[b_read] = '\0';
-	//	ft_putstr(buf);
-		MALLCHECK(tempbuf = ft_strjoin(curfd->buffer, buf))
-		free(curfd->buffer);
-		curfd->buffer = tempbuf;
+		MALLCHECK(curfd->buffer = ft_strjoin(curfd->buffer, buf))
 		if (ft_strchr(buf, '\n')) break;
 	}
-	b_read = copy_till_eol(curfd->buffer, line);
+	b_read = copy_till_eol(&curfd->buffer, line);
 	if (b_read == 0 || b_read == -1)
 	{
 		ft_lstdelone(&fdl, fd);

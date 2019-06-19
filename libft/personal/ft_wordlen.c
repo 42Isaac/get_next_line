@@ -17,12 +17,12 @@
 **  and ends at char end.
 */
 
-size_t	ft_wordlen(char *s, int start, char end)
+size_t	ft_wordlen(char *str, int start, char end)
 {
 	size_t	len;
 
 	len = 0;
-	while (s[start] && s[start] != end)
+	while (str[start] && str[start] != end)
 	{
 		len++;
 		start++;
