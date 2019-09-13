@@ -12,6 +12,47 @@
 
 #include "get_next_line.h"
 
+void	printstructs(t_list *alst)
+{
+	ft_putstr("int	fd: ");
+	ft_putnbr(alst->fd);
+	ft_putchar('\n');
+	ft_putstr("char	*buffer");
+	ft_putstr(alst->buffer);
+	ft_putchar('\n');
+	ft_putstr("struct s_list	*next: ");
+	if (alst->next)
+		ft_putstr("next\n\n");
+	else
+		ft_putstr("NULL\n\n");
+}
+
+/*
+**	Safely removes the list containing fd from the linked list.
+*/
+
+void	ft_lstdelone(t_list *alst, const int fd)
+{
+	t_list	*temp;
+	t_list	*curlst;
+
+	curlst = alst;
+	temp = (alst->fd == fd ? alst : NULL);
+	while (!temp)
+	{
+		if (curlst->next->fd == fd)
+			temp = curlst->next;
+		else
+			curlst = curlst->next;
+	}
+	if (alst->fd == fd)
+		alst = alst->next;
+	else
+		curlst->next = curlst->next->next;
+	free(temp->buffer);
+	free(temp);
+}
+
 /*
 ** Returns the list for the current fd.
 ** If none exists, make a new list and add to the linked list.
@@ -30,7 +71,7 @@ static t_list	*c_fd(t_list **fdl, int fd)
 	}
 	if (!(curfd = ft_lstnew(fd)) || curfd->buffer == NULL)
 	{
-		ft_lstdelone(&curfd, fd);
+		ft_lstdelone(curfd, fd);
 		return (NULL);
 	}
 	ft_lstadd(fdl, curfd);
@@ -39,7 +80,7 @@ static t_list	*c_fd(t_list **fdl, int fd)
 
 /*
 ** Removes line from sbuf.
-** Returns 0 on success, -1 on failure.
+** Returns 1 on success, -1 on failure.
 */
 
 static int		clean_sbuf(char **sbuf, int linelen)
@@ -63,7 +104,7 @@ static int		clean_sbuf(char **sbuf, int linelen)
 		nblcopy--;
 	}
 	free(buf);
-	return (0);
+	return (1);
 }
 
 /*
@@ -78,6 +119,7 @@ static int		copy_till_eol(char **sbuf, char **line)
 	int		returnvalue;
 
 	i =	0;
+	returnvalue = 1;
 	while ((*sbuf)[i] && (*sbuf)[i] != '\n')
 		i++;
 	icpy = i;
@@ -88,20 +130,26 @@ static int		copy_till_eol(char **sbuf, char **line)
 	{
 		(*line)[icpy] = (*sbuf)[icpy];
 	}
-	if (clean_sbuf(sbuf, i))
-		return (-1);
-	return (returnvalue);
+	return (clean_sbuf(sbuf, i) == 1 ? returnvalue : -1);
 }
+
+/*
+**	It's gnl. Does everything it needs to, returns -1 on error,
+**	0 on success and EOF has been reached, and 1 on success
+**	and EOF has not been reached.
+*/
 
 int				get_next_line(const int fd, char **line)
 {
 	char			buf[BUFF_SIZE + 1];
+	char			*temp;
 	static t_list	*fdl;
 	int				b_read;
 	t_list			*curfd;
 
 	if (fd < 0 || !line || read(fd, buf, 0) < 0 || !(curfd = c_fd(&fdl, fd)))
 		return (-1);
+	printstructs(curfd);
 	if (ft_strchr(curfd->buffer, '\n'))
 	{
 		b_read = copy_till_eol(&curfd->buffer, line);
@@ -110,14 +158,13 @@ int				get_next_line(const int fd, char **line)
 	while ((b_read = read(fd, buf, BUFF_SIZE)))
 	{
 		buf[b_read] = '\0';
-		MALLCHECK(curfd->buffer = ft_strjoin(curfd->buffer, buf))
+		MALLCHECK(temp = ft_strjoin(curfd->buffer, buf));
+		free(curfd->buffer);
+		curfd->buffer = temp;
 		if (ft_strchr(buf, '\n')) break;
 	}
 	b_read = copy_till_eol(&curfd->buffer, line);
 	if (b_read == 0 || b_read == -1)
-	{
-		ft_lstdelone(&fdl, fd);
-		return (b_read);
-	}
-	return (1);
+		ft_lstdelone(fdl, fd);
+	return (b_read == 0 || b_read == -1 ? b_read : 1);
 }
