@@ -12,45 +12,22 @@
 
 #include "get_next_line.h"
 
-void	printstructs(t_list *alst)
-{
-	ft_putstr("int	fd: ");
-	ft_putnbr(alst->fd);
-	ft_putchar('\n');
-	ft_putstr("char	*buffer");
-	ft_putstr(alst->buffer);
-	ft_putchar('\n');
-	ft_putstr("struct s_list	*next: ");
-	if (alst->next)
-		ft_putstr("next\n\n");
-	else
-		ft_putstr("NULL\n\n");
-}
-
 /*
-**	Safely removes the list containing fd from the linked list.
+** Creates a new structer and initializes everything as needed.
 */
 
-void	ft_lstdelone(t_list *alst, const int fd)
+t_list		*ft_lstnew(int fd)
 {
-	t_list	*temp;
-	t_list	*curlst;
+	t_list		*list;
 
-	curlst = alst;
-	temp = (alst->fd == fd ? alst : NULL);
-	while (!temp)
-	{
-		if (curlst->next->fd == fd)
-			temp = curlst->next;
-		else
-			curlst = curlst->next;
-	}
-	if (alst->fd == fd)
-		alst = alst->next;
-	else
-		curlst->next = curlst->next->next;
-	free(temp->buffer);
-	free(temp);
+	if (!(list = (t_list *)malloc(sizeof(*list))))
+		return (NULL);
+	list->fd = fd;
+	list->eof = 0;
+	if (!(list->buffer = ft_strnew(0)))
+		list->buffer = NULL;
+	list->next = NULL;
+	return (list);
 }
 
 /*
@@ -70,10 +47,7 @@ static t_list	*c_fd(t_list **fdl, int fd)
 		curfd = curfd->next;
 	}
 	if (!(curfd = ft_lstnew(fd)) || curfd->buffer == NULL)
-	{
-		ft_lstdelone(curfd, fd);
 		return (NULL);
-	}
 	ft_lstadd(fdl, curfd);
 	return (*fdl);
 }
@@ -109,28 +83,28 @@ static int		clean_sbuf(char **sbuf, int linelen)
 
 /*
 ** Copy sbuf to line up to newline or EOF.
-** Returns 1 on success, 0 on EOF, and -1 on error.
+** Returns 1 on success, and -1 on error.
 */
 
-static int		copy_till_eol(char **sbuf, char **line)
+static int		copy_till_eol(char **sbuf, char **line, int *eof)
 {
 	int		i;
 	int		icpy;
-	int		returnvalue;
 
 	i =	0;
-	returnvalue = 1;
 	while ((*sbuf)[i] && (*sbuf)[i] != '\n')
 		i++;
 	icpy = i;
-	if (!(*sbuf)[icpy])
-		returnvalue = 0;
+	if (!(*sbuf)[icpy] || ((*sbuf)[icpy] == '\n' && !(*sbuf)[icpy + 1]))
+	{
+		(*eof) = 1;
+	}
 	MALLCHECK(*line = ft_strnew(i))
 	while (icpy-- > 0)
 	{
 		(*line)[icpy] = (*sbuf)[icpy];
 	}
-	return (clean_sbuf(sbuf, i) == 1 ? returnvalue : -1);
+	return (clean_sbuf(sbuf, i));
 }
 
 /*
@@ -149,11 +123,12 @@ int				get_next_line(const int fd, char **line)
 
 	if (fd < 0 || !line || read(fd, buf, 0) < 0 || !(curfd = c_fd(&fdl, fd)))
 		return (-1);
-	printstructs(curfd);
+	if (curfd->eof)
+		return (0);
 	if (ft_strchr(curfd->buffer, '\n'))
 	{
-		b_read = copy_till_eol(&curfd->buffer, line);
-		return (b_read == -1 ? -1 : 1);
+		b_read = copy_till_eol(&curfd->buffer, line, &curfd->eof);
+		return (b_read);
 	}
 	while ((b_read = read(fd, buf, BUFF_SIZE)))
 	{
@@ -161,10 +136,9 @@ int				get_next_line(const int fd, char **line)
 		MALLCHECK(temp = ft_strjoin(curfd->buffer, buf));
 		free(curfd->buffer);
 		curfd->buffer = temp;
-		if (ft_strchr(buf, '\n')) break;
+		if (ft_strchr(buf, '\n'))
+			break;
 	}
-	b_read = copy_till_eol(&curfd->buffer, line);
-	if (b_read == 0 || b_read == -1)
-		ft_lstdelone(fdl, fd);
+	b_read = copy_till_eol(&curfd->buffer, line, &curfd->eof);
 	return (b_read == 0 || b_read == -1 ? b_read : 1);
 }

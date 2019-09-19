@@ -20,7 +20,7 @@ INCLUDES	= $(wildcard *.c) libft/libft.a
 silent:
 	@make all -s
 
-debug:
+debug: fclean
 	make all CFLAGS='$(CFLAGS) -g'
 
 all:
@@ -31,7 +31,7 @@ clean:
 	-$(MAKE) clean -C libft -s
 
 fclean:
-	-$(MAKE) clean -C libft -s
+	-$(MAKE) fclean -C libft -s
 	-rm -f $(NAME)
 	-rm -f -r $(NAME).dSYM
 

@@ -68,12 +68,6 @@ int			main(int ac, char **av)
 		i2 = 1;
 		fd1 = open(av[1], O_RDONLY | O_EXCL);
 		fd2 = open(av[2], O_RDONLY | O_EXCL);
-		ft_putstr("fd1: ");
-		ft_putnbr(fd1);
-		ft_putchar('\n');
-		ft_putstr("fd2: ");
-		ft_putnbr(fd2);
-		ft_putchar('\n');
 		while (i1 || i2)
 		{
 			if (i1)
@@ -99,6 +93,10 @@ int			main(int ac, char **av)
 		while (i1)
 		{
 			i1 = get_next_line(fd1, &line);
+			ft_putnbr(i1);
+			ft_putstr(": ");
+			if (i1 == 0)
+				break;
 			ft_putstr(line);
 			ft_putstr("\n");
 			free(line);
