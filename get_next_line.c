@@ -48,7 +48,11 @@ static t_list	*c_fd(t_list **fdl, int fd)
 	}
 	if (!(curfd = ft_lstnew(fd)) || curfd->buffer == NULL)
 		return (NULL);
-	ft_lstadd(fdl, curfd);
+	if (curfd != *fdl)
+	{
+		curfd->next = *fdl;
+		*fdl = curfd;
+	}
 	return (*fdl);
 }
 
@@ -130,14 +134,13 @@ int				get_next_line(const int fd, char **line)
 		b_read = copy_till_eol(&curfd->buffer, line, &curfd->eof);
 		return (b_read);
 	}
-	while ((b_read = read(fd, buf, BUFF_SIZE)))
+	ft_bzero(buf, BUFF_SIZE);
+	while (!(ft_strchr(buf, '\n')) && (b_read = read(fd, buf, BUFF_SIZE)))
 	{
 		buf[b_read] = '\0';
 		MALLCHECK(temp = ft_strjoin(curfd->buffer, buf));
 		free(curfd->buffer);
 		curfd->buffer = temp;
-		if (ft_strchr(buf, '\n'))
-			break;
 	}
 	b_read = copy_till_eol(&curfd->buffer, line, &curfd->eof);
 	return (b_read == 0 || b_read == -1 ? b_read : 1);

@@ -19,4 +19,12 @@
 
 int				get_next_line(const int fd, char **line);
 
+typedef struct		s_list
+{
+	int				fd;
+	int				eof;
+	char			*buffer;
+	struct s_list	*next;
+}					t_list;
+
 #endif
