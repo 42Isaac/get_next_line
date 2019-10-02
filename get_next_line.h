@@ -12,8 +12,8 @@
 
 #ifndef GET_NEXT_LINE_H
 # define GET_NEXT_LINE_H
-# define BUFF_SIZE 1000
-# define MALLCHECK(x) if (!(x)) return (-1);
+# define BUFF_SIZE 32
+# define MC(x) if (x) return (-1);
 
 # include "libft/libft.h"
 

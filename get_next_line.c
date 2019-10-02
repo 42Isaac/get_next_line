@@ -16,14 +16,14 @@
 ** Creates a new structer and initializes everything as needed.
 */
 
-t_list		*ft_lstnew(int fd)
+static t_list		*ft_lstnew(int fd)
 {
 	t_list		*list;
 
 	if (!(list = (t_list *)malloc(sizeof(*list))))
 		return (NULL);
 	list->fd = fd;
-	list->eof = 0;
+	list->eof = 1;
 	if (!(list->buffer = ft_strnew(0)))
 		list->buffer = NULL;
 	list->next = NULL;
@@ -70,12 +70,14 @@ static int		clean_sbuf(char **sbuf, int linelen)
 
 	sbuflen = ft_strlen(*sbuf);
 	newbuflen = sbuflen - linelen - 1;
+	if (newbuflen < 0)
+		newbuflen = 0;
 	nblcopy = newbuflen;
-	MALLCHECK(buf = ft_strnew(newbuflen));
+	MC(!(buf = ft_strnew(newbuflen)));
 	while (newbuflen >= 0)
 		buf[newbuflen--] = (*sbuf)[sbuflen--];
 	free(*sbuf);
-	MALLCHECK(*sbuf = ft_strnew(nblcopy));
+	MC(!(*sbuf = ft_strnew(nblcopy)));
 	while (nblcopy >= 0)
 	{
 		(*sbuf)[nblcopy] = buf[nblcopy];
@@ -87,7 +89,7 @@ static int		clean_sbuf(char **sbuf, int linelen)
 
 /*
 ** Copy sbuf to line up to newline or EOF.
-** Returns 1 on success, and -1 on error.
+** Returns 1 on success, 0 on EOF, and -1 on error.
 */
 
 static int		copy_till_eol(char **sbuf, char **line, int *eof)
@@ -99,16 +101,13 @@ static int		copy_till_eol(char **sbuf, char **line, int *eof)
 	while ((*sbuf)[i] && (*sbuf)[i] != '\n')
 		i++;
 	icpy = i;
-	if (!(*sbuf)[icpy] || ((*sbuf)[icpy] == '\n' && !(*sbuf)[icpy + 1]))
-	{
-		(*eof) = 1;
-	}
-	MALLCHECK(*line = ft_strnew(i))
+	if (!(*sbuf)[0] || ((*sbuf)[icpy] == '\n' && !(*sbuf)[icpy + 1]))
+		(*eof) = ((*eof) > 0) ? (*eof) : ((*eof) -= 1);
+	MC(!(*line = ft_strnew(i)))
 	while (icpy-- > 0)
-	{
 		(*line)[icpy] = (*sbuf)[icpy];
-	}
-	return (clean_sbuf(sbuf, i));
+	icpy = clean_sbuf(sbuf, i);
+	return (icpy == 1 && (*eof) < -1 ? 0 : icpy);
 }
 
 /*
@@ -125,23 +124,19 @@ int				get_next_line(const int fd, char **line)
 	int				b_read;
 	t_list			*curfd;
 
-	if (fd < 0 || !line || read(fd, buf, 0) < 0 || !(curfd = c_fd(&fdl, fd)))
-		return (-1);
-	if (curfd->eof)
+	MC(fd < 0 || !line || read(fd, buf, 0) < 0 || !(curfd = c_fd(&fdl, fd)))
+	if (curfd->eof < -1)
 		return (0);
 	if (ft_strchr(curfd->buffer, '\n'))
-	{
-		b_read = copy_till_eol(&curfd->buffer, line, &curfd->eof);
-		return (b_read);
-	}
+		return (copy_till_eol(&curfd->buffer, line, &curfd->eof));
 	ft_bzero(buf, BUFF_SIZE);
 	while (!(ft_strchr(buf, '\n')) && (b_read = read(fd, buf, BUFF_SIZE)))
 	{
 		buf[b_read] = '\0';
-		MALLCHECK(temp = ft_strjoin(curfd->buffer, buf));
+		MC(!(temp = ft_strjoin(curfd->buffer, buf)));
 		free(curfd->buffer);
 		curfd->buffer = temp;
 	}
-	b_read = copy_till_eol(&curfd->buffer, line, &curfd->eof);
-	return (b_read == 0 || b_read == -1 ? b_read : 1);
+	curfd->eof = b_read == 0 && curfd->eof == 1 ? -1 : curfd->eof;
+	return (copy_till_eol(&curfd->buffer, line, &curfd->eof));
 }
