@@ -16,7 +16,7 @@
 ** Creates a new structer and initializes everything as needed.
 */
 
-static t_list		*ft_lstnew(int fd)
+static t_list	*ft_lstnew(int fd)
 {
 	t_list		*list;
 
@@ -73,11 +73,13 @@ static int		clean_sbuf(char **sbuf, int linelen)
 	if (newbuflen < 0)
 		newbuflen = 0;
 	nblcopy = newbuflen;
-	MC(!(buf = ft_strnew(newbuflen)));
+	if (!(buf = ft_strnew(newbuflen)))
+		return (-1);
 	while (newbuflen >= 0)
 		buf[newbuflen--] = (*sbuf)[sbuflen--];
 	free(*sbuf);
-	MC(!(*sbuf = ft_strnew(nblcopy)));
+	if (!(*sbuf = ft_strnew(nblcopy)))
+		return (-1);
 	while (nblcopy >= 0)
 	{
 		(*sbuf)[nblcopy] = buf[nblcopy];
@@ -97,13 +99,14 @@ static int		copy_till_eol(char **sbuf, char **line, int *eof)
 	int		i;
 	int		icpy;
 
-	i =	0;
+	i = 0;
 	while ((*sbuf)[i] && (*sbuf)[i] != '\n')
 		i++;
 	icpy = i;
 	if (!(*sbuf)[0] || ((*sbuf)[icpy] == '\n' && !(*sbuf)[icpy + 1]))
 		(*eof) = ((*eof) > 0) ? (*eof) : ((*eof) -= 1);
-	MC(!(*line = ft_strnew(i)))
+	if (!(*line = ft_strnew(i)))
+		return (-1);
 	while (icpy-- > 0)
 		(*line)[icpy] = (*sbuf)[icpy];
 	icpy = clean_sbuf(sbuf, i);
@@ -124,7 +127,8 @@ int				get_next_line(const int fd, char **line)
 	int				b_read;
 	t_list			*curfd;
 
-	MC(fd < 0 || !line || read(fd, buf, 0) < 0 || !(curfd = c_fd(&fdl, fd)))
+	if (fd < 0 || !line || read(fd, buf, 0) < 0 || !(curfd = c_fd(&fdl, fd)))
+		return (-1);
 	if (curfd->eof < -1)
 		return (0);
 	if (ft_strchr(curfd->buffer, '\n'))
@@ -133,7 +137,8 @@ int				get_next_line(const int fd, char **line)
 	while (!(ft_strchr(buf, '\n')) && (b_read = read(fd, buf, BUFF_SIZE)))
 	{
 		buf[b_read] = '\0';
-		MC(!(temp = ft_strjoin(curfd->buffer, buf)));
+		if (!(temp = ft_strjoin(curfd->buffer, buf)))
+			return (-1);
 		free(curfd->buffer);
 		curfd->buffer = temp;
 	}
