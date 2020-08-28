@@ -13,9 +13,9 @@
 NAME		= gnl
 CFLAGS		= -Wall -Werror -Wextra
 
-INCLUDES	= $(wildcard ../*.c *.c) ../libft/libft.a
+INCLUDES	= $(wildcard ../*.c *.c)
 
-.PHONY: silent show all clean fclean re
+.PHONY: silent show all fclean re
 
 silent:
 	@make all -s
@@ -24,14 +24,9 @@ debug: fclean
 	make all CFLAGS='$(CFLAGS) -g'
 
 all:
-	$(MAKE) all -C ../libft
 	gcc $(CFLAGS) $(INCLUDES) -o $(NAME)
 
-clean:
-	-$(MAKE) clean -C ../libft -s
-
 fclean:
-	-$(MAKE) fclean -C ../libft -s
 	-rm -f $(NAME)
 	-rm -rf $(NAME).dSYM
 

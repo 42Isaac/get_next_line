@@ -14,7 +14,16 @@
 # define GET_NEXT_LINE_H
 # define BUFF_SIZE 32
 
-# include "libft/libft.h"
+# include <string.h>
+# include <unistd.h>
+# include <stdlib.h>
+
+void				ft_bzero(void *s, size_t n);
+char				*ft_strchr(const char *s, int c);
+size_t				ft_strlen(const char *s);
+
+char				*ft_strnew(size_t size);
+char				*ft_strjoin(char const *s1, char const *s2);
 
 int					get_next_line(const int fd, char **line);
 
